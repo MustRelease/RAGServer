@@ -47,7 +47,7 @@ async def add_memory(infomation: Item):
     importance=infomation.importance
     
     db_metadatas=[  #바꿔야 하는 부분
-        {"userId":userId, "timeStamp":timestamp, "observation": observation, "importance": importance}
+        {"userId":userId, "timestamp":timestamp, "observation": observation, "importance": importance}
     ]
     #DB 삽입
     collection.add(
@@ -94,7 +94,7 @@ def calculate(result_list):
     prompt_list=[]
     for i in range(0,len(result_meta)):
         prompt_dic={}
-        prompt_dic['timeStamp']=(result_meta[i]).get('timeStamp')
+        prompt_dic['timestamp']=(result_meta[i]).get('timestamp')
         prompt_dic['observation']=(result_meta[i]).get('observation')
         prompt_dic['recency']=0.0
         prompt_dic['importance']=(result_meta[i]).get('importance')
@@ -110,7 +110,7 @@ def calculate(result_list):
 def calculate_recency(prompt_list):
     timestamp_list=[]
     for i in range(0,len(prompt_list)):
-        timestamp_list.append(prompt_list[i].get('timeStamp'))
+        timestamp_list.append(prompt_list[i].get('timestamp'))
     max_value=max(timestamp_list)
     min_value=min(timestamp_list)
     for i in range(0,len(prompt_list)):
