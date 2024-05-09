@@ -18,7 +18,7 @@ embed_model=modelUpload.model_upload()
 
 class Item(BaseModel):
     userId: str
-    timestamp: str
+    timestamp: int
     observation: str
     importance: float
     
@@ -110,7 +110,7 @@ def calculate(result_list):
 def calculate_recency(prompt_list):
     timestamp_list=[]
     for i in range(0,len(prompt_list)):
-        timestamp_list.append(int(prompt_list[i].get('timeStamp')))
+        timestamp_list.append(prompt_list[i].get('timeStamp'))
     max_value=max(timestamp_list)
     min_value=min(timestamp_list)
     for i in range(0,len(prompt_list)):
