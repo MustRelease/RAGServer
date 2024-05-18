@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import modelUpload
 import numpy as np
+from typing import List
 
 #uvicorn RAGServer:app --reload --host=0.0.0.0 --port=8800
 #python -m uvicorn FastApi:app --reload
@@ -31,37 +32,53 @@ async def make_collection(user: User):
     return 200; 
 
 @app.post("/memory/add")
-async def add_memory(infomation: Item):
-    collection=client.get_collection(name=infomation.userId)
-    #기억 정보 임베딩
-    db_embedding_word=[infomation.observation]
-    embeddings=embed_model.encode(db_embedding_word)
-    db_embedding=embeddings.tolist()
-    
-    #정보 모으기
-    id=str(collection.count()+1) 
-    print(id)
-    userId=infomation.userId
-    timestamp=infomation.timestamp
-    observation=infomation.observation
-    importance=infomation.importance
-    
-    db_metadatas=[  #바꿔야 하는 부분
-        {"userId":userId, "timestamp":timestamp, "observation": observation, "importance": importance}
-    ]
-    #DB 삽입
-    collection.add(
-        ids=id,
-        metadatas=db_metadatas,
-        embeddings=db_embedding
-    )
-    
-    return db_metadatas;
+async def add_memory(infomations: List[Item]):
+    collection=client.get_collection(name=infomations[0].userId)
+    result_meta=[]
+    for i in range(0,len(infomations)):
+        #기억 정보 임베딩
+        db_embedding_word=[infomations[i].observation]
+        embeddings=embed_model.encode(db_embedding_word)
+        db_embedding=embeddings.tolist()
+        
+        #id 새로운 방법 없으면 1부터, 있으면 최대 ids 찾아서 그 다음 id 부여
+        n_result=collection.count()
+        if(n_result!=0):
+            id=str(get_ids_max(collection)+1)
+        else:
+            id=str(1)
+            
+        print(id)
+        
+        userId=infomations[i].userId
+        timestamp=infomations[i].timestamp
+        observation=infomations[i].observation
+        importance=infomations[i].importance
+        
+        db_metadatas=[  #바꿔야 하는 부분
+            {"userId":userId, "timestamp":timestamp, "observation": observation, "importance": importance}
+        ]
+        result_meta.append(db_metadatas)
+        
+        #DB 삽입
+        collection.add(
+            ids=id,
+            metadatas=db_metadatas,
+            embeddings=db_embedding
+        )
+        
+    return result_meta;
     
 @app.get("/memory/get/{query}/{userid}")
 async def get_memory(query: str, userid: str):
     collection=client.get_collection(name=userid)
     n_result=collection.count() #결과 출력 개수
+    print(n_result)
+    if(n_result==0):
+        return 410
+    elif(n_result==1):
+        return 420
+        
     #쿼리 임베딩
     print(query)
     query_embedding_word=[query] #바꿔야 하는 부분
@@ -71,17 +88,13 @@ async def get_memory(query: str, userid: str):
     result=collection.query(
         query_embeddings=query_embedding[0],
         n_results=n_result,
-        # where={"userId":"king123"} #유저 아이디 필터링
     )
     print(result)
-    #3가지의 합 계산 코드 작성하기
+    
+    #3가지의 합
     to_prompt_list=calculate(result)
     
-    #Obeservation반환
-
-    # print(result_meta)
     return to_prompt_list
-
 
 def calculate(result_list):
     result_meta=(result_list["metadatas"])[0]
@@ -111,6 +124,7 @@ def calculate(result_list):
     
     
 def calculate_recency(prompt_list):
+    # timestamp 방식
     # timestamp_list=[]
     # for i in range(0,len(prompt_list)):
     #     timestamp_list.append(prompt_list[i].get('timestamp'))
@@ -121,6 +135,7 @@ def calculate_recency(prompt_list):
     #     (prompt_list[i])['recency']=normal_num
     # print(prompt_list)
     
+    #ids 방식
     ids_list=[]
     for i in range(0,len(prompt_list)):
         ids_list.append(int(prompt_list[i].get('ids')))
@@ -135,3 +150,41 @@ def calculate_priority(prompt_list):
     for i in range(0,len(prompt_list)):
         (prompt_list[i])['priority']=prompt_list[i].get('recency') + prompt_list[i].get('importance')+ prompt_list[i].get('similarity')
     return         
+
+
+@app.delete("/memory/delete/all/{userid}/{start}/{end}")
+async def delete_memory(userid: str, start: int, end: int):
+    collection=client.get_collection(name=userid)
+    ids=[]
+    for i in range(start,end+1):
+        ids.append(str(i))
+    print(ids)
+    collection.delete(ids=ids)
+    return 200
+    
+
+@app.delete("/memory/delete/all/{userid}")
+async def delete_memory(userid: str):
+    collection=client.get_collection(name=userid)
+    ids=[]
+    for i in range(1,get_ids_max(collection)+1):
+        ids.append(str(i))
+    print(ids)
+    collection.delete(ids=ids)
+    return 200
+
+#기억에서 ids 최대값 찾아서 int로 반환
+def get_ids_max(collection):
+    n_result=collection.count()
+    query_embedding_word=[" "] #바꿔야 하는 부분
+    query_embedding=embed_model.encode(query_embedding_word)
+    query_embedding=query_embedding.tolist()
+    result=collection.query(
+            query_embeddings=query_embedding[0],
+            n_results=n_result
+    )
+    result_ids=(result["ids"])[0]
+    id_int=[]
+    for j in range(0,len(result_ids)):
+        id_int.append(int(result_ids[j]))
+    return max(id_int)
