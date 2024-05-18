@@ -88,6 +88,8 @@ def calculate(result_list):
     print(result_meta)
     print(len(result_meta))
     result_distance=(result_list["distances"])[0]
+    result_ids=(result_list["ids"])[0]
+    print(result_ids)
     print(result_distance)
     
     #시간, 행동, 최근성, 중요도, 유사도, 3가지의 합 리스트 구성
@@ -97,6 +99,7 @@ def calculate(result_list):
         prompt_dic['timestamp']=(result_meta[i]).get('timestamp')
         prompt_dic['observation']=(result_meta[i]).get('observation')
         prompt_dic['recency']=0.0
+        prompt_dic['ids']=(result_ids[i])
         prompt_dic['importance']=(result_meta[i]).get('importance')
         prompt_dic['similarity']=1-result_distance[i]
         prompt_list.append(prompt_dic)        
@@ -108,15 +111,24 @@ def calculate(result_list):
     
     
 def calculate_recency(prompt_list):
-    timestamp_list=[]
+    # timestamp_list=[]
+    # for i in range(0,len(prompt_list)):
+    #     timestamp_list.append(prompt_list[i].get('timestamp'))
+    # max_value=max(timestamp_list)
+    # min_value=min(timestamp_list)
+    # for i in range(0,len(prompt_list)):
+    #     normal_num=(timestamp_list[i]-min_value)/(max_value-min_value)
+    #     (prompt_list[i])['recency']=normal_num
+    # print(prompt_list)
+    
+    ids_list=[]
     for i in range(0,len(prompt_list)):
-        timestamp_list.append(prompt_list[i].get('timestamp'))
-    max_value=max(timestamp_list)
-    min_value=min(timestamp_list)
+        ids_list.append(int(prompt_list[i].get('ids')))
+    max_value=max(ids_list)
+    min_value=min(ids_list)
     for i in range(0,len(prompt_list)):
-        normal_num=(timestamp_list[i]-min_value)/(max_value-min_value)
-        (prompt_list[i])['recency']=normal_num
-    print(prompt_list)
+        normal_num=(ids_list[i]-min_value)/(max_value-min_value)
+        (prompt_list[i])['recency']=normal_num    
     return
     
 def calculate_priority(prompt_list):
