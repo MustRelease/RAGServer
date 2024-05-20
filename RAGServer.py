@@ -126,8 +126,8 @@ async def get_memory(userid: str):
     collection=client.get_collection(name=userid+"_buffer")
     return get_all_memory_byId(collection)
 
-@app.get("/memory/get/{query}/{userid}")
-async def get_memory(query: str, userid: str):
+@app.get("/memory/get/{query}/{userid}/{count}")
+async def get_memory(query: str, userid: str, count: int):
     collection=client.get_collection(name=userid)
     n_result=collection.count() #결과 출력 개수
     print(n_result)
@@ -147,11 +147,11 @@ async def get_memory(query: str, userid: str):
     print(result)
     
     #3가지의 합
-    to_prompt_list=calculate(result)
+    to_prompt_list=calculate(result,count)
     
     return to_prompt_list
 
-def calculate(result_list):
+def calculate(result_list,count):
     result_meta=(result_list["metadatas"])[0]
     print(result_meta)
     print(len(result_meta))
@@ -175,7 +175,11 @@ def calculate(result_list):
     calculate_priority(prompt_list)
     sorted_list = sorted(prompt_list, key=lambda x: x['priority'], reverse=True)
     print(sorted_list)
-    return sorted_list
+    sorted_count_list=[]
+    for i in range(0,count):
+        sorted_count_list.append(sorted_list[i])
+    print(sorted_count_list)
+    return sorted_count_list
     
     
 def calculate_recency(prompt_list):
