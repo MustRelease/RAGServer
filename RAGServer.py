@@ -22,6 +22,7 @@ class Item(BaseModel):
     timestamp: int
     observation: str
     importance: float
+    isEventScene: bool
     
 class User(BaseModel):
     userId: str
@@ -29,11 +30,15 @@ class User(BaseModel):
 @app.post("/make/collection")
 async def make_collection(user: User):
     client.create_collection(name=user.userId, metadata={"hnsw:space":"cosine"})
+    client.create_collection(name=user.userId+"_buffer",metadata={"hnsw:space":"cosine"})
     return 200; 
 
 @app.post("/memory/add")
 async def add_memory(infomations: List[Item]):
-    collection=client.get_collection(name=infomations[0].userId)
+    if(infomations[0].isEventScene):
+        collection=client.get_collection(name=infomations[0].userId+"_buffer")
+    else:
+        collection=client.get_collection(name=infomations[0].userId)
     result_meta=[]
     for i in range(0,len(infomations)):
         #기억 정보 임베딩
@@ -69,6 +74,60 @@ async def add_memory(infomations: List[Item]):
         
     return result_meta;
     
+@app.patch("/memory/relocate/{userId}")
+async def relocate_memory(userId: str):
+    collection=client.get_collection(name=userId)
+    collection_buffer=client.get_collection(name=userId+"_buffer")
+    buffer_memory=get_all_memory(collection_buffer)
+    buffer_meta=(buffer_memory["metadatas"])[0]
+    
+    for i in range(0,len(buffer_meta)):
+        (buffer_meta[i])["isEventScene"]=False
+    result_meta=add_memory2(collection,buffer_meta)
+    delete_memory2(userId+"_buffer")
+    # for i in range(0,len(buffer_memory)):
+    #     buffer_meta.append(buffer_memory[i])
+    # result=collection_buffer.get(
+    #     ids=buffer_id
+    # )
+    return result_meta
+    
+def add_memory2(collection,metalist):
+    result_meta=[]
+    print(metalist)
+    for i in range(0,len(metalist)):
+        #기억 정보 임베딩
+        db_embedding_word=[(metalist[i])["observation"]]
+        embeddings=embed_model.encode(db_embedding_word)
+        db_embedding=embeddings.tolist()
+        
+        #id 새로운 방법 없으면 1부터, 있으면 최대 ids 찾아서 그 다음 id 부여
+        n_result=collection.count()
+        if(n_result!=0):
+            id=str(get_ids_max(collection)+1)
+        else:
+            id=str(1)
+            
+        print(id)
+        
+        userId=(metalist[i])["userId"]
+        timestamp=(metalist[i])["timestamp"]
+        observation=(metalist[i])["observation"]
+        importance=(metalist[i])["importance"]
+        
+        db_metadatas=[  #바꿔야 하는 부분
+            {"userId":userId, "timestamp":timestamp, "observation": observation, "importance": importance}
+        ]
+        result_meta.append(db_metadatas)
+        
+        #DB 삽입
+        collection.add(
+            ids=id,
+            metadatas=db_metadatas,
+            embeddings=db_embedding
+        )
+    return result_meta
+        
 @app.get("/memory/get/{query}/{userid}")
 async def get_memory(query: str, userid: str):
     collection=client.get_collection(name=userid)
@@ -173,6 +232,15 @@ async def delete_memory(userid: str):
     collection.delete(ids=ids)
     return 200
 
+def delete_memory2(userid):
+    collection=client.get_collection(name=userid)
+    ids=[]
+    for i in range(1,get_ids_max(collection)+1):
+        ids.append(str(i))
+    print(ids)
+    collection.delete(ids=ids)
+    return 200
+
 #기억에서 ids 최대값 찾아서 int로 반환
 def get_ids_max(collection):
     n_result=collection.count()
@@ -188,3 +256,14 @@ def get_ids_max(collection):
     for j in range(0,len(result_ids)):
         id_int.append(int(result_ids[j]))
     return max(id_int)
+
+def get_all_memory(collection):
+    n_result=collection.count()
+    query_embedding_word=[" "] #바꿔야 하는 부분
+    query_embedding=embed_model.encode(query_embedding_word)
+    query_embedding=query_embedding.tolist()
+    result=collection.query(
+            query_embeddings=query_embedding[0],
+            n_results=n_result
+    )
+    return result
