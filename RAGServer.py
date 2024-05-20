@@ -78,18 +78,11 @@ async def add_memory(infomations: List[Item]):
 async def relocate_memory(userId: str):
     collection=client.get_collection(name=userId)
     collection_buffer=client.get_collection(name=userId+"_buffer")
-    buffer_memory=get_all_memory(collection_buffer)
-    buffer_meta=(buffer_memory["metadatas"])[0]
-    
+    buffer_meta=get_all_memory_byId(collection_buffer)
     for i in range(0,len(buffer_meta)):
         (buffer_meta[i])["isEventScene"]=False
     result_meta=add_memory2(collection,buffer_meta)
     delete_memory2(userId+"_buffer")
-    # for i in range(0,len(buffer_memory)):
-    #     buffer_meta.append(buffer_memory[i])
-    # result=collection_buffer.get(
-    #     ids=buffer_id
-    # )
     return result_meta
     
 def add_memory2(collection,metalist):
@@ -128,6 +121,11 @@ def add_memory2(collection,metalist):
         )
     return result_meta
         
+@app.get("/memory/get/buffer/{userid}")
+async def get_memory(userid: str):
+    collection=client.get_collection(name=userid+"_buffer")
+    return get_all_memory_byId(collection)
+
 @app.get("/memory/get/{query}/{userid}")
 async def get_memory(query: str, userid: str):
     collection=client.get_collection(name=userid)
@@ -135,8 +133,6 @@ async def get_memory(query: str, userid: str):
     print(n_result)
     if(n_result==0):
         return 410
-    elif(n_result==1):
-        return 420
         
     #쿼리 임베딩
     print(query)
@@ -201,7 +197,10 @@ def calculate_recency(prompt_list):
     max_value=max(ids_list)
     min_value=min(ids_list)
     for i in range(0,len(prompt_list)):
-        normal_num=(ids_list[i]-min_value)/(max_value-min_value)
+        if(min_value==max_value):
+            normal_num=1.0
+        else:
+            normal_num=(ids_list[i]-min_value)/(max_value-min_value)
         (prompt_list[i])['recency']=normal_num    
     return
     
@@ -267,3 +266,19 @@ def get_all_memory(collection):
             n_results=n_result
     )
     return result
+
+def get_all_memory_byId(collection):
+    n_result=collection.count()
+    if(n_result==0):
+        return 410
+    query_embedding_word=[" "] #바꿔야 하는 부분
+    query_embedding=embed_model.encode(query_embedding_word)
+    query_embedding=query_embedding.tolist()
+    result=collection.query(
+            query_embeddings=query_embedding[0],
+            n_results=n_result
+    )
+    ids=(result["ids"])[0]
+    result=collection.get(ids=ids)
+    print(result)
+    return result["metadatas"]
