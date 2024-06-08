@@ -23,6 +23,7 @@ class Item(BaseModel):
     observation: str
     importance: float
     isEventScene: bool
+    reasonIds: str
     
 class User(BaseModel):
     userId: str
@@ -59,9 +60,11 @@ async def add_memory(infomations: List[Item]):
         timestamp=infomations[i].timestamp
         observation=infomations[i].observation
         importance=infomations[i].importance
+        isEventScene=infomations[i].isEventScene
+        reasonIds=infomations[i].reasonIds
         
         db_metadatas=[  #바꿔야 하는 부분
-            {"userId":userId, "timestamp":timestamp, "observation": observation, "importance": importance}
+            {"userId":userId, "timestamp":timestamp, "observation": observation, "importance": importance,"isEventScene": isEventScene, "reasonIds": reasonIds}
         ]
         result_meta.append(db_metadatas)
         
@@ -178,8 +181,9 @@ def calculate(result_list,count):
     sorted_count_list=[]
     for i in range(0,count):
         sorted_count_list.append(sorted_list[i])
-    print(sorted_count_list)
-    return sorted_count_list
+    sorted_recency_list = sorted(sorted_count_list,key=lambda x: x['recency'], reverse=True )
+    print(sorted_recency_list)
+    return sorted_recency_list
     
     
 def calculate_recency(prompt_list):
@@ -210,7 +214,7 @@ def calculate_recency(prompt_list):
     
 def calculate_priority(prompt_list):
     for i in range(0,len(prompt_list)):
-        (prompt_list[i])['priority']=prompt_list[i].get('recency') + prompt_list[i].get('importance')+ prompt_list[i].get('similarity')
+        (prompt_list[i])['priority']= prompt_list[i].get('importance')+ prompt_list[i].get('similarity')
     return         
 
 
