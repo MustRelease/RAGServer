@@ -56,7 +56,7 @@ async def add_memory(infomations: List[Item]):
             id=str(1)
             
         print(id)
-        print(collection+"에 저장되었습니다." )
+        print(collection.name+"에 저장되었습니다." )
         
         userId=infomations[i].userId
         timestamp=infomations[i].timestamp
