@@ -38,7 +38,6 @@ async def make_collection(user: User):
 @app.post("/memory/add")
 async def add_memory(infomations: List[Item]):
     if(infomations[0].isEventScene):
-        print(infomations[0].userId)
         collection=client.get_collection(name=infomations[0].userId+"_buffer")
     else:
         collection=client.get_collection(name=infomations[0].userId)
@@ -57,7 +56,7 @@ async def add_memory(infomations: List[Item]):
             id=str(1)
             
         print(id)
-        # print(collection.name+"에 저장되었습니다." )
+        print(collection.name+"에 저장되었습니다." )
         
         userId=infomations[i].userId
         timestamp=infomations[i].timestamp
