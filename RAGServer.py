@@ -56,6 +56,7 @@ async def add_memory(infomations: List[Item]):
             id=str(1)
             
         print(id)
+        print(collection+"에 저장되었습니다." )
         
         userId=infomations[i].userId
         timestamp=infomations[i].timestamp
@@ -111,6 +112,7 @@ def add_memory2(collection,metalist):
             add_ids=int(id)-1
         
         print(id)
+        print("Buffer -> Memory 저장되었습니다.")
         
         userId=(metalist[i])["userId"]
         timestamp=(metalist[i])["timestamp"]
@@ -170,7 +172,7 @@ async def get_memory(query: str, userid: str, count: int):
         query_embeddings=query_embedding[0],
         n_results=n_result,
     )
-    print(result)
+    #print(result)
     
     #2가지의 합
     to_prompt_list=calculate(result,count)
@@ -179,12 +181,12 @@ async def get_memory(query: str, userid: str, count: int):
 
 def calculate(result_list,count):
     result_meta=(result_list["metadatas"])[0]
-    print(result_meta)
-    print(len(result_meta))
+    #print(result_meta)
+    #print(len(result_meta))
     result_distance=(result_list["distances"])[0]
     result_ids=(result_list["ids"])[0]
-    print(result_ids)
-    print(result_distance)
+    #print(result_ids)
+    #print(result_distance)
     
     #시간, 행동, 최근성, 중요도, 유사도, 3가지의 합 리스트 구성
     prompt_list=[]
@@ -201,14 +203,14 @@ def calculate(result_list,count):
     calculate_recency(prompt_list)
     calculate_priority(prompt_list)
     sorted_list = sorted(prompt_list, key=lambda x: x['priority'], reverse=True)
-    print(sorted_list)
+    #print(sorted_list)
     sorted_count_list=[]
     for i in range(0,count):
         if(i == len(sorted_list)):
             break
         sorted_count_list.append(sorted_list[i])
     sorted_recency_list = sorted(sorted_count_list,key=lambda x: x['recency'], reverse=True )
-    print(sorted_recency_list)
+    #print(sorted_recency_list)
     return sorted_recency_list
     
     
@@ -250,7 +252,7 @@ async def delete_memory(userid: str, start: int, end: int):
     ids=[]
     for i in range(start,end+1):
         ids.append(str(i))
-    print(ids)
+    #print(ids)
     collection.delete(ids=ids)
     return 200
     
@@ -261,7 +263,7 @@ async def delete_memory(userid: str):
     ids=[]
     for i in range(1,get_ids_max(collection)+1):
         ids.append(str(i))
-    print(ids)
+    #print(ids)
     collection.delete(ids=ids)
     return 200
 
@@ -271,7 +273,7 @@ async def delete_buffer_memory(userId: str):
     ids=[]
     for i in range(1,get_ids_max(collection)+1):
         ids.append(str(i))
-    print(ids)
+    print("버퍼 삭제 리스트:" +ids)
     collection.delete(ids=ids)
     return 200
 
@@ -280,7 +282,7 @@ def delete_memory2(userid):
     ids=[]
     for i in range(1,get_ids_max(collection)+1):
         ids.append(str(i))
-    print(ids)
+    print("버퍼 삭제 리스트:"+ ids)
     collection.delete(ids=ids)
     return 200
 
@@ -330,7 +332,7 @@ def get_all_memory_byId(collection):
         ids.append(str(i))
         relist=collection.get(ids=ids)
         ids.clear()
-        print(relist)
+        #print(relist)
         result.append((relist['metadatas'])[0])
-    print(result)
+    #print(result)
     return result
