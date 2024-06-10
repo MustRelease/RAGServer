@@ -273,7 +273,8 @@ async def delete_buffer_memory(userId: str):
     ids=[]
     for i in range(1,get_ids_max(collection)+1):
         ids.append(str(i))
-    print("버퍼 삭제 리스트:" +ids)
+    print("버퍼 삭제 리스트:")
+    print(ids)
     collection.delete(ids=ids)
     return 200
 
@@ -282,7 +283,8 @@ def delete_memory2(userid):
     ids=[]
     for i in range(1,get_ids_max(collection)+1):
         ids.append(str(i))
-    print("버퍼 삭제 리스트:"+ ids)
+    print("버퍼 삭제 리스트:")
+    print(ids)
     collection.delete(ids=ids)
     return 200
 
