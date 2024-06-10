@@ -184,6 +184,7 @@ def calculate(result_list,count):
         prompt_dic['ids']=(result_ids[i])
         prompt_dic['importance']=(result_meta[i]).get('importance')
         prompt_dic['similarity']=1-result_distance[i]
+        prompt_dic['reasonIds']=(result_meta[i]).get('reasonIds')
         prompt_list.append(prompt_dic)        
     calculate_recency(prompt_list)
     calculate_priority(prompt_list)
