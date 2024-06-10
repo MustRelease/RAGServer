@@ -84,6 +84,7 @@ async def relocate_memory(userId: str):
     buffer_meta=get_all_memory_byId(collection_buffer)
     for i in range(0,len(buffer_meta)):
         (buffer_meta[i])["isEventScene"]=False
+    print(buffer_meta)
     result_meta=add_memory2(collection,buffer_meta)
     delete_memory2(userId+"_buffer")
     return result_meta
@@ -110,9 +111,11 @@ def add_memory2(collection,metalist):
         timestamp=(metalist[i])["timestamp"]
         observation=(metalist[i])["observation"]
         importance=(metalist[i])["importance"]
+        isEventScene=(metalist[i])["isEventScene"]
+        reasonIds=(metalist[i])["reasonIds"]
         
         db_metadatas=[  #바꿔야 하는 부분
-            {"userId":userId, "timestamp":timestamp, "observation": observation, "importance": importance}
+            {"userId":userId, "timestamp":timestamp, "observation": observation, "importance": importance,"isEventScene" : isEventScene ,"reasonIds": reasonIds}
         ]
         result_meta.append(db_metadatas)
         
