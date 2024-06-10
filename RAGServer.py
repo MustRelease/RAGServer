@@ -119,7 +119,7 @@ def add_memory2(collection,metalist):
         isEventScene=(metalist[i])["isEventScene"]
         reasonIds=(metalist[i])["reasonIds"]
         
-        if(reasonIds!=""):
+        if(reasonIds!="null"):
             print(reasonIds)
             int_list = ast.literal_eval(reasonIds)
             for j in range(0,len(int_list)):
