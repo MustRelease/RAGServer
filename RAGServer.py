@@ -7,6 +7,7 @@ from pydantic import BaseModel
 import modelUpload
 import numpy as np
 from typing import List
+import ast
 
 #uvicorn RAGServer:app --reload --host=0.0.0.0 --port=8800
 #python -m uvicorn FastApi:app --reload
@@ -84,15 +85,16 @@ async def relocate_memory(userId: str):
     buffer_meta=get_all_memory_byId(collection_buffer)
     for i in range(0,len(buffer_meta)):
         (buffer_meta[i])["isEventScene"]=False
-    print(buffer_meta)
+    #print(buffer_meta)
     result_meta=add_memory2(collection,buffer_meta)
     delete_memory2(userId+"_buffer")
     return result_meta
     
 def add_memory2(collection,metalist):
     result_meta=[]
-    print(metalist)
+    #print(metalist)
     for i in range(0,len(metalist)):
+        
         #기억 정보 임베딩
         db_embedding_word=[(metalist[i])["observation"]]
         embeddings=embed_model.encode(db_embedding_word)
@@ -105,6 +107,9 @@ def add_memory2(collection,metalist):
         else:
             id=str(1)
             
+        if(i==0):
+            add_ids=int(id)-1
+        
         print(id)
         
         userId=(metalist[i])["userId"]
@@ -113,6 +118,13 @@ def add_memory2(collection,metalist):
         importance=(metalist[i])["importance"]
         isEventScene=(metalist[i])["isEventScene"]
         reasonIds=(metalist[i])["reasonIds"]
+        
+        if(reasonIds!=""):
+            print(reasonIds)
+            int_list = ast.literal_eval(reasonIds)
+            for j in range(0,len(int_list)):
+                int_list[j]=int_list[j]+add_ids
+            reasonIds=str(int_list) 
         
         db_metadatas=[  #바꿔야 하는 부분
             {"userId":userId, "timestamp":timestamp, "observation": observation, "importance": importance,"isEventScene" : isEventScene ,"reasonIds": reasonIds}
@@ -303,14 +315,22 @@ def get_all_memory_byId(collection):
     n_result=collection.count()
     if(n_result==0):
         return 410
-    query_embedding_word=[" "] #바꿔야 하는 부분
-    query_embedding=embed_model.encode(query_embedding_word)
-    query_embedding=query_embedding.tolist()
-    result=collection.query(
-            query_embeddings=query_embedding[0],
-            n_results=n_result
-    )
-    ids=(result["ids"])[0]
-    result=collection.get(ids=ids)
+    # query_embedding_word=[" "] #바꿔야 하는 부분
+    # query_embedding=embed_model.encode(query_embedding_word)
+    # query_embedding=query_embedding.tolist()
+    # result=collection.query(
+    #         query_embeddings=query_embedding[0],
+    #         n_results=n_result
+    # )
+    #ids=(result["ids"])[0]
+    #print(ids)
+    ids=[]
+    result=[]
+    for i in range(1,n_result+1):
+        ids.append(str(i))
+        relist=collection.get(ids=ids)
+        ids.clear()
+        print(relist)
+        result.append((relist['metadatas'])[0])
     print(result)
-    return result["metadatas"]
+    return result
