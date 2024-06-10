@@ -160,7 +160,7 @@ async def get_memory(query: str, userid: str, count: int):
     )
     print(result)
     
-    #3가지의 합
+    #2가지의 합
     to_prompt_list=calculate(result,count)
     
     return to_prompt_list
@@ -192,6 +192,8 @@ def calculate(result_list,count):
     print(sorted_list)
     sorted_count_list=[]
     for i in range(0,count):
+        if(i == len(sorted_list)):
+            break
         sorted_count_list.append(sorted_list[i])
     sorted_recency_list = sorted(sorted_count_list,key=lambda x: x['recency'], reverse=True )
     print(sorted_recency_list)
