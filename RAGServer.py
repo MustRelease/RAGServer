@@ -129,6 +129,14 @@ async def get_memory(userid: str):
     collection=client.get_collection(name=userid+"_buffer")
     return get_all_memory_byId(collection)
 
+@app.get("/memory/get/id/{userId}/{memoryId}")
+async def get_memory_byId(userId: str, memoryId: int):
+    collection=client.get_collection(name=userId)
+    ids=[]
+    ids.append(str(memoryId))
+    result=collection.get(ids=ids)
+    return result["metadatas"]
+
 @app.get("/memory/get/{query}/{userid}/{count}")
 async def get_memory(query: str, userid: str, count: int):
     collection=client.get_collection(name=userid)
@@ -232,6 +240,16 @@ async def delete_memory(userid: str, start: int, end: int):
 @app.delete("/memory/delete/all/{userid}")
 async def delete_memory(userid: str):
     collection=client.get_collection(name=userid)
+    ids=[]
+    for i in range(1,get_ids_max(collection)+1):
+        ids.append(str(i))
+    print(ids)
+    collection.delete(ids=ids)
+    return 200
+
+@app.delete("/memory/delete/buffer/all/{userId}")
+async def delete_buffer_memory(userId: str):
+    collection=client.get_collection(name=userId+"_buffer")
     ids=[]
     for i in range(1,get_ids_max(collection)+1):
         ids.append(str(i))
