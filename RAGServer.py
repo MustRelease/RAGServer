@@ -133,10 +133,10 @@ async def get_memory(userid: str):
     return get_all_memory_byId(collection)
 
 @app.get("/memory/get/id/{userId}/{memoryId}")
-async def get_memory_byId(userId: str, memoryId: int):
+async def get_memory_byId(userId: str, memoryId: str):
     collection=client.get_collection(name=userId)
     ids=[]
-    ids.append(str(memoryId))
+    ids.append(memoryId)
     result=collection.get(ids=ids)
     return result["metadatas"]
 
