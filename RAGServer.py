@@ -194,7 +194,7 @@ def calculate(result_list,count):
         prompt_dic={}
         prompt_dic['timestamp']=(result_meta[i]).get('timestamp')
         prompt_dic['observation']=(result_meta[i]).get('observation')
-        prompt_dic['recency']=0.0
+        prompt_dic['recency']=0.0;
         prompt_dic['ids']=(result_ids[i])
         prompt_dic['importance']=(result_meta[i]).get('importance')
         prompt_dic['similarity']=1-result_distance[i]
@@ -203,14 +203,13 @@ def calculate(result_list,count):
     calculate_recency(prompt_list)
     calculate_priority(prompt_list)
     sorted_list = sorted(prompt_list, key=lambda x: x['priority'], reverse=True)
-    #print(sorted_list)
     sorted_count_list=[]
     for i in range(0,count):
         if(i == len(sorted_list)):
             break
         sorted_count_list.append(sorted_list[i])
-    sorted_recency_list = sorted(sorted_count_list,key=lambda x: x['recency'], reverse=True )
-    #print(sorted_recency_list)
+    sorted_recency_list = sorted(sorted_count_list,key=lambda x: x['recency'])
+    print(sorted_recency_list)
     return sorted_recency_list
     
     
@@ -236,13 +235,13 @@ def calculate_recency(prompt_list):
         if(min_value==max_value):
             normal_num=1.0
         else:
-            normal_num=(ids_list[i]-min_value)/(max_value-min_value)
+            normal_num=0.7+(ids_list[i]-min_value)*0.3/(max_value-min_value)
         (prompt_list[i])['recency']=normal_num    
     return
     
 def calculate_priority(prompt_list):
     for i in range(0,len(prompt_list)):
-        (prompt_list[i])['priority']= prompt_list[i].get('importance')+ prompt_list[i].get('similarity')
+        (prompt_list[i])['priority']= prompt_list[i].get('importance')+ prompt_list[i].get('similarity')+prompt_list[i].get('recency')
     return         
 
 
